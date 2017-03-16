@@ -34,7 +34,7 @@ import codeonce.thinktwice.rxandroidexample.models.AppInfoRich;
 import codeonce.thinktwice.rxandroidexample.models.ApplicationsList;
 import codeonce.thinktwice.rxandroidexample.util.Utils;
 import rx.Observable;
-import rx.Observer;
+import rx.Subscriber;
 import rx.android.schedulers.AndroidSchedulers;
 import rx.schedulers.Schedulers;
 
@@ -82,51 +82,34 @@ public class FirstExampleFragment extends Fragment {
     }
 
     private Observable<File> getFileDir() {
-        return Observable.create(subscriber -> {
-            subscriber.onNext(CoreApplication.instance.getFilesDir());
-            subscriber.onCompleted();
+        return Observable.create(new Observable.OnSubscribe<File>() {
+            @Override
+            public void call(Subscriber<? super File> subscriber) {
+                subscriber.onNext(CoreApplication.instance.getFilesDir());
+                subscriber.onCompleted();
+            }
         });
     }
 
     private void refreshTheList() {
-
-        getApps().subscribe(new Observer<AppInfo>() {
-            @Override
-            public void onCompleted() {
-
-            }
-
-            @Override
-            public void onError(Throwable e) {
-
-            }
-
-            @Override
-            public void onNext(AppInfo appInfo) {
-
-            }
-        });
-
-        getApps().toSortedList().subscribe(new Observer<List<AppInfo>>() {
-            @Override
-            public void onCompleted() {
-                Toast.makeText(getActivity(), "Here is the list!", Toast.LENGTH_LONG).show();
-            }
-
-            @Override
-            public void onError(Throwable e) {
-                Toast.makeText(getActivity(), "Something went wrong!", Toast.LENGTH_SHORT).show();
-                mSwipeRefreshLayout.setRefreshing(false);
-            }
-
-            @Override
-            public void onNext(List<AppInfo> appInfos) {
-                mRecyclerView.setVisibility(View.VISIBLE);
-                mAdapter.addApplications(appInfos);
-                mSwipeRefreshLayout.setRefreshing(false);
-                storeList(appInfos);
-            }
-        });
+        getApps()
+                .filter(appInfo -> appInfo != null && appInfo.getName().contains("M"))
+//                .map(appInfo -> {
+//                    appInfo.setName("Handsome guy");
+//                    return appInfo;
+//                })
+                .toSortedList()
+                .subscribe(appInfos -> {
+                    mRecyclerView.setVisibility(View.VISIBLE);
+                    mAdapter.addApplications(appInfos);
+                    mSwipeRefreshLayout.setRefreshing(false);
+                    storeList(appInfos);
+                }, throwable -> {
+                    Toast.makeText(getActivity(), "Something went wrong!",
+                            Toast.LENGTH_SHORT).show();
+                    mSwipeRefreshLayout.setRefreshing(false);
+                }, () -> Toast.makeText(getActivity(), "Here is the list!",
+                        Toast.LENGTH_LONG).show());
     }
 
     private void storeList(List<AppInfo> appInfos) {
