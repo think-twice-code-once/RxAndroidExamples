@@ -15,6 +15,7 @@ import codeonce.thinktwice.rxandroidexample.fragments.FirstExampleFragment_;
 import rx.Observable;
 import rx.Observer;
 import rx.Subscriber;
+import rx.Subscription;
 import rx.android.schedulers.AndroidSchedulers;
 import rx.functions.Action0;
 import rx.subjects.PublishSubject;
@@ -22,6 +23,7 @@ import rx.subjects.PublishSubject;
 @EActivity(R.layout.activity_main)
 public class MainActivity extends BaseActivity {
 
+    Subscription subscription;
 
     @AfterViews
     void init() {
@@ -40,7 +42,7 @@ public class MainActivity extends BaseActivity {
 
 //        observableJustExample();
 
-        publishSubjectExample();
+//        publishSubjectExample();
 
 //        publishSubjectExample2();
 
@@ -52,7 +54,7 @@ public class MainActivity extends BaseActivity {
 
 //        flatMapExample();
 
-//        debounceExample();
+        debounceExample();
     }
 
     private Observable<String> getStringObservable() {
@@ -171,12 +173,15 @@ public class MainActivity extends BaseActivity {
         listData.add("Item  4");
         listData.add("Item  5");
 
-        Observable.interval(3, TimeUnit.SECONDS)
+        subscription = Observable.interval(3, TimeUnit.SECONDS)
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(aLong -> {
                             Toast.makeText(getApplicationContext(), "OK !", Toast.LENGTH_SHORT).show();
                             Toast.makeText(getApplicationContext(), aLong + " : ---> ", Toast.LENGTH_SHORT).show();
                             Log.d("TestRxAndroid", "What the hell !");
+                            if (aLong > 10) {
+                                ok();
+                            }
                         },
                         throwable -> {
                             Toast.makeText(getApplicationContext(), "Error !", Toast.LENGTH_SHORT).show();
@@ -184,6 +189,12 @@ public class MainActivity extends BaseActivity {
                         () -> {
                             Toast.makeText(getApplicationContext(), "Complete roi em !", Toast.LENGTH_SHORT).show();
                         });
+    }
+
+    private void ok() {
+        if (subscription != null) {
+            subscription.unsubscribe();
+        }
     }
 
     private void flatMapExample() {
